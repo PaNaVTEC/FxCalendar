@@ -1,5 +1,6 @@
 const cron = require('cron')
 const { todayEvents, nextWeekEvents } = require("./economicEvents")
+const { sectorPerformance } = require("./economicEvents")
 
 const sendMessageAt = (client, cronRegex, msg) => sendMessageFn(client, cronRegex, channel => channel.send(msg))
 const sendMessageFn = (client, cronRegex, channelSend) => new cron.CronJob(cronRegex, () => {
@@ -13,6 +14,9 @@ const scheduleDailyEvents = client =>
   sendMessageFn(client, '0 5 * * 1-5', channel => todayEvents().then(msgs => msgs.forEach(m => channel.send(m)))).start()
 
 const scheduleNextWeekEvents = client =>
+  sendMessageFn(client, '5 22 * * 1-5', channel => sectorPerformance().then(msg => channel.send(msg))).start()
+
+const wallStreetSummary = client =>
   sendMessageFn(client, '0 20 * * 6', channel => nextWeekEvents().then(msgs => msgs.forEach(m => channel.send(m)))).start()
 
 const scheduleLondonOpen = client =>
@@ -34,6 +38,7 @@ const scheduleTasks = client => {
   scheduleNyOpen(client)
   scheduleLondonKillZone(client)
   scheduleNyKillZone(client)
+  wallStreetSummary(client)
 }
 
 module.exports = {
