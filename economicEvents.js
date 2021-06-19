@@ -9,10 +9,10 @@ const groupByFn = (key, fn, xs) =>
   }, {});
 const groupBy = (key, xs) => groupByFn(key, a => a, xs)
 
-const currentWeekEventsUrl = () =>
+const currentWeekEventsUrl =
   `https://www.babypips.com/economic-calendar?timezone=Europe%2FMadrid&week=${moment().year()}-W${moment().week() - 1}`
 
-const nextWeekEventsUrl = () =>
+const nextWeekEventsUrl =
   `https://www.babypips.com/economic-calendar?timezone=Europe%2FMadrid&week=${moment().year()}-W${moment().week()}`
 
 const fetchEvents = url =>
@@ -29,18 +29,12 @@ const formatEvents = evs =>
     .map(ev => `:flag_${ev.country.toLocaleLowerCase()}: ${moment(ev.starts_at, moment.DATETIME_LOCAL_MS).tz("Europe/Madrid").format('HH:mm')} :watch: ${(ev.name || '').substring(0, 30)}`)
     .join('\n')
 
-const eventsToSummary = (day, url, groupedEvs) => {
-  if (!groupedEvs.med && !groupedEvs.high)
-    return [
-      `No events for ${day} were found`
-    ]
-  
-  return [
-    `Summary of events for ${day}\n${!groupedEvs.med ? '' : 'Importance :yellow_square:\n'}`,
-    !groupedEvs.med ? undefined : formatEvents(groupedEvs.med) + '\n',
-    !groupedEvs.high ? undefined : `Importance :red_square:\n${formatEvents(groupedEvs.high)}\n`
-  ].filter(a => a)
-}
+const eventsToSummary = (day, url, groupedEvs) => !groupedEvs.med && !groupedEvs.high
+  ? [`No events for ${day} were found`]
+  : [`Summary of events for ${day}\n${!groupedEvs.med ? '' : 'Importance :yellow_square:\n'}`,
+      groupedEvs.med && `formatEvents(groupedEvs.med)\n`,
+      groupedEvs.high && `Importance :red_square:\n${formatEvents(groupedEvs.high)}\n`
+    ].filter(a => a)
   
 const todayEventsForMessage = msg => {
   msg.react('🤔')
@@ -48,17 +42,17 @@ const todayEventsForMessage = msg => {
 }
 
 const todayEvents = () => 
-  fetchEvents(currentWeekEventsUrl())
+  fetchEvents(currentWeekEventsUrl)
     .then(events =>
       groupBy(
         'impact',
         events.filter(ev => moment(ev.starts_at, moment.DATETIME_LOCAL_MS).date() === moment().date())
       )
     )
-    .then(groupedEvs => eventsToSummary(moment().format("DD-MM"), currentWeekEventsUrl(), groupedEvs))
+    .then(groupedEvs => eventsToSummary(moment().format("DD-MM"), currentWeekEventsUrl, groupedEvs))
 
 const nextWeekEvents = () =>
-  fetchEvents(nextWeekEventsUrl())
+  fetchEvents(nextWeekEventsUrl)
     .then(events =>
       groupByFn(
         'starts_at',
@@ -72,7 +66,7 @@ const nextWeekEvents = () =>
         .map(day => 
           eventsToSummary(
             day,
-            nextWeekEventsUrl(),
+            nextWeekEventsUrl,
             groupBy('impact', evsByDay[day])
           )
         )  
